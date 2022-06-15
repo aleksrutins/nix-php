@@ -32,21 +32,18 @@ let
       }
     }
   '';
-  nginxWebRoot = utils.writeIndex {};
-  startScript = pkgs.writeText "start.sh" ''
-    #!/bin/sh
-    php-fpm -y /etc/php-fpm.d/www.conf.default & nginx -c ${nginxConf};
-  '';
+  nginxWebRoot = ../app;
 in dockerTools.buildLayeredImage {
     name = "nix-php-test";
     tag = "latest";
     contents = [
-      pkgs.bash
       pkgs.nginx
       pkgs.php81
-      pkgs.coreutils
       pkgs.fakeNss
-      pkgs.gnugrep
+      (pkgs.writeScriptBin "start-server" ''
+        #!${pkgs.runtimeShell}
+        php-fpm -y /etc/php-fpm.d/www.conf.default & nginx -c ${nginxConf};
+      '')
     ];
 
     extraCommands = ''
@@ -57,7 +54,7 @@ in dockerTools.buildLayeredImage {
     '';
 
     config = {
-      Cmd = [ "/bin/sh" startScript ];
+      Cmd = [ "start-server" ];
       ExposedPorts = {
         "${nginxPort}/tcp" = {};
       };

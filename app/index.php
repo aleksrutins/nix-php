@@ -22,6 +22,10 @@
         h1 {
             font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
         }
+        a {
+            padding-top: 2px;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -29,5 +33,6 @@
     <div>
         <b>PHP version:</b> <?= phpversion(); ?>
     </div>
+    <a href="/about.php">Go to another page</a>
 </body>
 </html>
