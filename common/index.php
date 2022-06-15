@@ -26,6 +26,8 @@
 </head>
 <body>
     <h1>Hello World, PHP!</h1>
-    <b>PHP version:</b> <?= phpversion(); ?>
+    <div>
+        <b>PHP version:</b> <?= phpversion(); ?>
+    </div>
 </body>
 </html>

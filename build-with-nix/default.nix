@@ -19,8 +19,12 @@ let
 
         add_header X-Frame-Options "SAMEORIGIN";
         add_header X-Content-Type-Options "nosniff";
-
+        location / {
+          root ${nginxWebRoot};
+        }
         location ~ \.php$ {
+          root ${nginxWebRoot};
+          fastcgi_pass 127.0.0.1:9000;
           fastcgi_split_path_info ^(.+\.php)(/.+)$;
           include ${pkgs.nginx}/conf/fastcgi_params;
           include ${pkgs.nginx}/conf/fastcgi.conf;
@@ -29,6 +33,10 @@ let
     }
   '';
   nginxWebRoot = utils.writeIndex {};
+  startScript = pkgs.writeText "start.sh" ''
+    #!/bin/sh
+    php-fpm -y /etc/php-fpm.d/www.conf.default & nginx -c ${nginxConf};
+  '';
 in dockerTools.buildLayeredImage {
     name = "nix-php-test";
     tag = "latest";
@@ -36,15 +44,20 @@ in dockerTools.buildLayeredImage {
       pkgs.bash
       pkgs.nginx
       pkgs.php81
+      pkgs.coreutils
+      pkgs.fakeNss
+      pkgs.gnugrep
     ];
 
     extraCommands = ''
       mkdir -p var/log/nginx
       mkdir -p var/cache/nginx
+      mkdir -p tmp
+      chmod 1777 tmp
     '';
 
     config = {
-      Cmd = [ "nginx" "-c" nginxConf ];
+      Cmd = [ "/bin/sh" startScript ];
       ExposedPorts = {
         "${nginxPort}/tcp" = {};
       };
