@@ -1,8 +1,9 @@
-{ pkgs, fakeNss }:
+{ pkgs ? import <nixpkgs> {} }:
 
 with pkgs;
 let 
-  nginxPort = 80;
+  utils = import ../common/utils.nix {};
+  nginxPort = "80";
   nginxConf = pkgs.writeText "nginx.conf" ''
     user nobody nobody;
     daemon off;
@@ -21,19 +22,18 @@ let
 
         location ~ \.php$ {
           fastcgi_split_path_info ^(.+\.php)(/.+)$;
-          fastcgi_pass unix:${pkgs.phpfpm.socket};
           include ${pkgs.nginx}/conf/fastcgi_params;
           include ${pkgs.nginx}/conf/fastcgi.conf;
         }
       }
     }
   '';
-in rec {
-  image = dockerTools.buildLayeredImage {
+  nginxWebRoot = utils.writeIndex {};
+in dockerTools.buildLayeredImage {
     name = "nix-php-test";
     tag = "latest";
     contents = [
-      fakeNss
+      pkgs.bash
       pkgs.nginx
       pkgs.php81
     ];
@@ -49,5 +49,4 @@ in rec {
         "${nginxPort}/tcp" = {};
       };
     };
-  };
-}
+  }
